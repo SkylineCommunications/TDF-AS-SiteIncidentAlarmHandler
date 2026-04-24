@@ -2,8 +2,11 @@
 {
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Net.Messages;
-    public class NewSiteIncident : SiteIncidentWithIgCode
+
+	public class NewSiteIncident : SiteIncidentWithIgCode
 	{
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.NamingRules", "SA1305:Field names should not use Hungarian notation", Justification = "Hungarian notation was not intended")]
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "VSSpell001:Spell Check", Justification = "Ig is a domain-specific abbreviation and is intentionally named as such.")]
 		public NewSiteIncident(IEngine engine, string igCode) : base(engine, igCode)
 		{
 			// Constructor delegates to base class - no additional setup needed

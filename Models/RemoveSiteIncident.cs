@@ -5,6 +5,8 @@
 
 	public class RemoveSiteIncident : SiteIncidentWithIgCode
 	{
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.NamingRules", "SA1305:Field names should not use Hungarian notation", Justification = "Hungarian notation was not intended")]
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "VSSpell001:Spell Check", Justification = "Ig is a domain-specific abbreviation and is intentionally named as such.")]
 		public RemoveSiteIncident(IEngine engine, string igCode) : base(engine, igCode)
 		{
 		}

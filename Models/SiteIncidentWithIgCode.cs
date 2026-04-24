@@ -8,17 +8,22 @@
 	using Skyline.DataMiner.Net.Helper;
 	using Skyline.DataMiner.Net.Messages;
 
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "VSSpell001:Spell Check", Justification = "Ig is a domain-specific abbreviation and is intentionally named as such.")]
 	public abstract class SiteIncidentWithIgCode : SiteIncident
 	{
 		protected const string PropertyName = "SiteActivities";
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "VSSpell001:Spell Check", Justification = "Ig is a domain-specific abbreviation and is intentionally named as such.")]
 		protected const string PropertyIgCodeNameFilter = "Alarm.IG Code";
 		protected const string IncidentTag = "INC";
 
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.NamingRules", "SA1305:Field names should not use Hungarian notation", Justification = "Hungarian notation was not intended")]
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "VSSpell001:Spell Check", Justification = "Ig is a domain-specific abbreviation and is intentionally named as such.")]
 		protected SiteIncidentWithIgCode(IEngine engine, string igCode) : base(engine)
 		{
 			IgCode = igCode;
 		}
 
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "VSSpell001:Spell Check", Justification = "Ig is a domain-specific abbreviation and is intentionally named as such.")]
 		public string IgCode { get; }
 
 		protected static string TryGetAlarmProperty(IEngine engine, AlarmEventMessage alarm)
@@ -89,22 +94,6 @@
 			}
 		}
 
-		protected AlarmEventMessage[] GetFilteredAlarmsByIgCode()
-		{
-			var alarmFilterItem = new AlarmFilterItemString(AlarmFilterField.PropertyValue, PropertyIgCodeNameFilter, AlarmFilterCompareType.Equality, new[] { IgCode });
-			var message = new GetActiveAlarmsMessage(-1)
-			{
-				Filter = new AlarmFilter(alarmFilterItem),
-			};
-
-			if (engine.SendSLNetSingleResponseMessage(message) is ActiveAlarmsResponseMessage alarmsResponse)
-			{
-				return alarmsResponse.ActiveAlarms.WhereNotNull().ToArray();
-			}
-
-			return Array.Empty<AlarmEventMessage>();
-		}
-
 		protected static bool TryRemoveIncidentTag(string currentValue, out string newValue)
 		{
 			newValue = currentValue;
@@ -141,6 +130,23 @@
 
 			int rootAlarmId = alarm.TreeID?.RootAlarmID ?? 0;
 			return $"{alarm.DataMinerID}/{alarm.ElementID}/{rootAlarmId}/{alarm.AlarmID}";
+		}
+
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "VSSpell001:Spell Check", Justification = "Ig is a domain-specific abbreviation and is intentionally named as such.")]
+		protected AlarmEventMessage[] GetFilteredAlarmsByIgCode()
+		{
+			var alarmFilterItem = new AlarmFilterItemString(AlarmFilterField.PropertyValue, PropertyIgCodeNameFilter, AlarmFilterCompareType.Equality, new[] { IgCode });
+			var message = new GetActiveAlarmsMessage(-1)
+			{
+				Filter = new AlarmFilter(alarmFilterItem),
+			};
+
+			if (engine.SendSLNetSingleResponseMessage(message) is ActiveAlarmsResponseMessage alarmsResponse)
+			{
+				return alarmsResponse.ActiveAlarms.WhereNotNull().ToArray();
+			}
+
+			return Array.Empty<AlarmEventMessage>();
 		}
 	}
 }

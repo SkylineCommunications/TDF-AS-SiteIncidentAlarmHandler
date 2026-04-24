@@ -24,7 +24,6 @@ namespace TDFASSiteIncidentAlarmHandler
 	/// </summary>
 	public class Script
 	{
-
 		/// <summary>
 		/// Specifies the type of action to perform for the site incident alarm handler.
 		/// </summary>

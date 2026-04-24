@@ -15,10 +15,10 @@
 	</Memory>
 
 	<Parameters>
-		<ScriptParameter id="1" type="string" values="">
+		<ScriptParameter id="10" type="string" values="">
 			<Description>ActionType</Description>
 		</ScriptParameter>
-		<ScriptParameter id="2" type="string" values="">
+		<ScriptParameter id="20" type="string" values="">
 			<Description>TargetValue</Description>
 		</ScriptParameter>
 	</Parameters>

@@ -8,7 +8,7 @@
 	using Skyline.DataMiner.Net.Messages;
 
 	public class UpdateSiteIncident : SiteIncident
-    {
+	{
 		private const string PropertyName = "SiteActivities";
 		private const string IncidentTag = "INC";
 
@@ -60,26 +60,6 @@
 					engine.GenerateInformation($"[UpdateSiteIncident] Alarm {FormatAlarmId(alarm)} - Failed to update property.");
 				}
 			}
-		}
-
-		private AlarmEventMessage[] GetFilteredAlarmByAlarmID()
-		{
-			if (!int.TryParse(AlarmId, out int targetAlarmId))
-			{
-				return Array.Empty<AlarmEventMessage>();
-			}
-
-			var message = new GetActiveAlarmsMessage(-1);
-
-			if (engine.SendSLNetSingleResponseMessage(message) is ActiveAlarmsResponseMessage alarmsResponse)
-			{
-				return alarmsResponse.ActiveAlarms
-					.WhereNotNull()
-					.Where(x => x.AlarmID == targetAlarmId)
-					.ToArray();
-			}
-
-			return Array.Empty<AlarmEventMessage>();
 		}
 
 		private static string TryGetAlarmProperty(IEngine engine, AlarmEventMessage alarm)
@@ -155,6 +135,26 @@
 
 			int rootAlarmId = alarm.TreeID?.RootAlarmID ?? 0;
 			return $"{alarm.DataMinerID}/{alarm.ElementID}/{rootAlarmId}/{alarm.AlarmID}";
+		}
+
+		private AlarmEventMessage[] GetFilteredAlarmByAlarmID()
+		{
+			if (!int.TryParse(AlarmId, out int targetAlarmId))
+			{
+				return Array.Empty<AlarmEventMessage>();
+			}
+
+			var message = new GetActiveAlarmsMessage(-1);
+
+			if (engine.SendSLNetSingleResponseMessage(message) is ActiveAlarmsResponseMessage alarmsResponse)
+			{
+				return alarmsResponse.ActiveAlarms
+					.WhereNotNull()
+					.Where(x => x.AlarmID == targetAlarmId)
+					.ToArray();
+			}
+
+			return Array.Empty<AlarmEventMessage>();
 		}
 	}
 }
