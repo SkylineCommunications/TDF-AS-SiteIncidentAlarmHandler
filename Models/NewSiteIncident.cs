@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using Skyline.DataMiner.Automation;
+﻿using Skyline.DataMiner.Automation;
 using Skyline.DataMiner.Net.Messages;
 
 namespace TDFASSiteIncidentAlarmHandler.Models
