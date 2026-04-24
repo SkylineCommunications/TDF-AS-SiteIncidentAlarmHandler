@@ -1,0 +1,146 @@
+﻿namespace TDFASSiteIncidentAlarmHandler.Models
+{
+	using System;
+	using System.Linq;
+
+	using Skyline.DataMiner.Automation;
+	using Skyline.DataMiner.Net.Filters;
+	using Skyline.DataMiner.Net.Helper;
+	using Skyline.DataMiner.Net.Messages;
+
+	public abstract class SiteIncidentWithIgCode : SiteIncident
+	{
+		protected const string PropertyName = "SiteActivities";
+		protected const string PropertyIgCodeNameFilter = "Alarm.IG Code";
+		protected const string IncidentTag = "INC";
+
+		protected SiteIncidentWithIgCode(IEngine engine, string igCode) : base(engine)
+		{
+			IgCode = igCode;
+		}
+
+		public string IgCode { get; }
+
+		protected AlarmEventMessage[] GetFilteredAlarmsByIgCode()
+		{
+			var alarmFilterItem = new AlarmFilterItemString(AlarmFilterField.PropertyValue, PropertyIgCodeNameFilter, AlarmFilterCompareType.Equality, new[] { IgCode });
+			var message = new GetActiveAlarmsMessage(-1)
+			{
+				Filter = new AlarmFilter(alarmFilterItem),
+			};
+
+			if (engine.SendSLNetSingleResponseMessage(message) is ActiveAlarmsResponseMessage alarmsResponse)
+			{
+				return alarmsResponse.ActiveAlarms.WhereNotNull().ToArray();
+			}
+
+			return Array.Empty<AlarmEventMessage>();
+		}
+
+		protected static string TryGetAlarmProperty(IEngine engine, AlarmEventMessage alarm)
+		{
+			if (alarm == null)
+			{
+				return null;
+			}
+
+			try
+			{
+				return engine.GetAlarmProperty(alarm.DataMinerID, alarm.ElementID, alarm.AlarmID, PropertyName);
+			}
+			catch (ArgumentException)
+			{
+				// Alarm is no longer there / cleared in the meantime.
+				return null;
+			}
+			catch (Exception)
+			{
+				// Other exceptions
+				return null;
+			}
+		}
+
+		protected static bool TrySetAlarmProperty(IEngine engine, AlarmEventMessage alarm, string newValue)
+		{
+			if (alarm == null)
+			{
+				return false;
+			}
+
+			try
+			{
+				engine.SetAlarmProperty(alarm.DataMinerID, alarm.ElementID, alarm.AlarmID, PropertyName, newValue);
+				return true;
+			}
+			catch (ArgumentException)
+			{
+				// Alarm is no longer there / already cleared in the meantime.
+				return false;
+			}
+			catch (Exception)
+			{
+				// Other exceptions
+				return false;
+			}
+		}
+
+		protected static bool TryAddIncidentTag(string currentValue, out string newValue)
+		{
+			newValue = currentValue;
+
+			if (string.IsNullOrWhiteSpace(currentValue))
+			{
+				newValue = IncidentTag;
+				return true;
+			}
+
+			var tags = currentValue.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+
+			if (tags.Any(t => t.Trim().Equals(IncidentTag, StringComparison.OrdinalIgnoreCase)))
+			{
+				return false;
+			}
+
+			newValue = currentValue + ";" + IncidentTag;
+			return true;
+		}
+
+		protected static bool TryRemoveIncidentTag(string currentValue, out string newValue)
+		{
+			newValue = currentValue;
+
+			if (string.IsNullOrWhiteSpace(currentValue))
+			{
+				return false;
+			}
+
+			var tags = currentValue
+				.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+				.Select(t => t.Trim())
+				.ToArray();
+
+			if (!tags.Any(t => t.Equals(IncidentTag, StringComparison.OrdinalIgnoreCase)))
+			{
+				return false;
+			}
+
+			var filtered = tags
+				.Where(t => !t.Equals(IncidentTag, StringComparison.OrdinalIgnoreCase))
+				.ToArray();
+
+			newValue = filtered.Length > 0 ? string.Join(";", filtered) : string.Empty;
+			return true;
+		}
+
+		protected static string FormatAlarmId(AlarmEventMessage alarm)
+		{
+			if (alarm == null)
+			{
+				return null;
+			}
+
+			int rootAlarmId = alarm.TreeID?.RootAlarmID ?? 0;
+			return $"{alarm.DataMinerID}/{alarm.ElementID}/{rootAlarmId}/{alarm.AlarmID}";
+		}
+	}
+}
