@@ -1,8 +1,7 @@
-﻿using Skyline.DataMiner.Automation;
-using Skyline.DataMiner.Net.Messages;
-
-namespace TDFASSiteIncidentAlarmHandler.Models
+﻿namespace TDFASSiteIncidentAlarmHandler.Models
 {
+	using Skyline.DataMiner.Automation;
+	using Skyline.DataMiner.Net.Messages;
     public class NewSiteIncident : SiteIncidentWithIgCode
 	{
 		public NewSiteIncident(IEngine engine, string igCode) : base(engine, igCode)

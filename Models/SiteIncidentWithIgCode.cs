@@ -21,22 +21,6 @@
 
 		public string IgCode { get; }
 
-		protected AlarmEventMessage[] GetFilteredAlarmsByIgCode()
-		{
-			var alarmFilterItem = new AlarmFilterItemString(AlarmFilterField.PropertyValue, PropertyIgCodeNameFilter, AlarmFilterCompareType.Equality, new[] { IgCode });
-			var message = new GetActiveAlarmsMessage(-1)
-			{
-				Filter = new AlarmFilter(alarmFilterItem),
-			};
-
-			if (engine.SendSLNetSingleResponseMessage(message) is ActiveAlarmsResponseMessage alarmsResponse)
-			{
-				return alarmsResponse.ActiveAlarms.WhereNotNull().ToArray();
-			}
-
-			return Array.Empty<AlarmEventMessage>();
-		}
-
 		protected static string TryGetAlarmProperty(IEngine engine, AlarmEventMessage alarm)
 		{
 			if (alarm == null)
@@ -58,6 +42,27 @@
 				// Other exceptions
 				return null;
 			}
+		}
+
+		protected static bool TryAddIncidentTag(string currentValue, out string newValue)
+		{
+			newValue = currentValue;
+
+			if (string.IsNullOrWhiteSpace(currentValue))
+			{
+				newValue = IncidentTag;
+				return true;
+			}
+
+			var tags = currentValue.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+
+			if (tags.Any(t => t.Trim().Equals(IncidentTag, StringComparison.OrdinalIgnoreCase)))
+			{
+				return false;
+			}
+
+			newValue = currentValue + ";" + IncidentTag;
+			return true;
 		}
 
 		protected static bool TrySetAlarmProperty(IEngine engine, AlarmEventMessage alarm, string newValue)
@@ -84,25 +89,20 @@
 			}
 		}
 
-		protected static bool TryAddIncidentTag(string currentValue, out string newValue)
+		protected AlarmEventMessage[] GetFilteredAlarmsByIgCode()
 		{
-			newValue = currentValue;
-
-			if (string.IsNullOrWhiteSpace(currentValue))
+			var alarmFilterItem = new AlarmFilterItemString(AlarmFilterField.PropertyValue, PropertyIgCodeNameFilter, AlarmFilterCompareType.Equality, new[] { IgCode });
+			var message = new GetActiveAlarmsMessage(-1)
 			{
-				newValue = IncidentTag;
-				return true;
+				Filter = new AlarmFilter(alarmFilterItem),
+			};
+
+			if (engine.SendSLNetSingleResponseMessage(message) is ActiveAlarmsResponseMessage alarmsResponse)
+			{
+				return alarmsResponse.ActiveAlarms.WhereNotNull().ToArray();
 			}
 
-			var tags = currentValue.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-
-			if (tags.Any(t => t.Trim().Equals(IncidentTag, StringComparison.OrdinalIgnoreCase)))
-			{
-				return false;
-			}
-
-			newValue = currentValue + ";" + IncidentTag;
-			return true;
+			return Array.Empty<AlarmEventMessage>();
 		}
 
 		protected static bool TryRemoveIncidentTag(string currentValue, out string newValue)

@@ -14,12 +14,8 @@ DATE		VERSION		AUTHOR			COMMENTS
 namespace TDFASSiteIncidentAlarmHandler
 {
 	using System;
-	using System.Linq;
 
 	using Skyline.DataMiner.Automation;
-	using Skyline.DataMiner.Net.Filters;
-	using Skyline.DataMiner.Net.Helper;
-	using Skyline.DataMiner.Net.Messages;
 
 	using TDFASSiteIncidentAlarmHandler.Models;
 
@@ -38,10 +34,12 @@ namespace TDFASSiteIncidentAlarmHandler
 			/// Indicates that a new site with an incident has been detected.
 			/// </summary>
 			NewSiteWithIncident,
+
 			/// <summary>
 			/// Indicates that a site already has an incident.
 			/// </summary>
 			SiteAlreadyHasAnIncident,
+
 			/// <summary>
 			/// Indicates that a site no longer has an incident.
 			/// </summary>
@@ -52,7 +50,7 @@ namespace TDFASSiteIncidentAlarmHandler
 		/// The script entry point.
 		/// </summary>
 		/// <param name="engine">Link with SLAutomation process.</param>
-		public void Run(IEngine engine)
+		public static void Run(IEngine engine)
 		{
 			try
 			{
@@ -85,7 +83,7 @@ namespace TDFASSiteIncidentAlarmHandler
 			}
 		}
 
-		private void RunSafe(IEngine engine)
+		private static void RunSafe(IEngine engine)
 		{
 			string actionTypeString = engine.GetScriptParam("ActionType")?.Value ?? string.Empty;
 			string targetValue = engine.GetScriptParam("TargetValue")?.Value ?? string.Empty;
@@ -108,7 +106,6 @@ namespace TDFASSiteIncidentAlarmHandler
 				return;
 			}
 
-			// Replace the switch expression with a switch statement for C# 7.3 compatibility
 			SiteIncident siteIncident;
 			switch (actionType)
 			{
@@ -124,6 +121,7 @@ namespace TDFASSiteIncidentAlarmHandler
 				default:
 					throw new ArgumentException($"Unsupported ActionType: '{actionType}'.");
 			}
+
 			siteIncident.Process();
 		}
 	}
