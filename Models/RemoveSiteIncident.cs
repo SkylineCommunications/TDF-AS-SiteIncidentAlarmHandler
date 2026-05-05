@@ -1,5 +1,7 @@
 ﻿namespace TDFASSiteIncidentAlarmHandler.Models
 {
+	using System.Collections.Generic;
+
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Net.Messages;
 
@@ -17,15 +19,15 @@
 
 			if (alarms.Length == 0)
 			{
-				engine.GenerateInformation($"[RemoveSiteIncident] No active alarms found for IG Code: '{IgCode}'");
 				return;
 			}
+
+			var updatedRootAlarmIds = new HashSet<string>();
 
 			foreach (AlarmEventMessage alarm in alarms)
 			{
 				if (alarm == null)
 				{
-					engine.GenerateInformation($"[RemoveSiteIncident] Encountered null alarm in collection.");
 					continue;
 				}
 
@@ -33,24 +35,25 @@
 
 				if (currentPropertyValue == null)
 				{
-					engine.GenerateInformation($"[RemoveSiteIncident] Alarm {FormatAlarmId(alarm)} - Property not accessible (alarm might be cleared).");
 					continue;
 				}
 
 				if (!TryRemoveIncidentTag(currentPropertyValue, out string newPropertyValue))
 				{
-					engine.GenerateInformation($"[RemoveSiteIncident] Alarm {FormatAlarmId(alarm)} - 'INC' tag not present. Current value: '{currentPropertyValue}'. Skipped.");
 					continue;
 				}
 
 				if (TrySetAlarmProperty(engine, alarm, newPropertyValue))
 				{
-					engine.GenerateInformation($"[RemoveSiteIncident] Alarm {FormatAlarmId(alarm)} - Removed 'INC' tag. Changed from '{currentPropertyValue}' to '{newPropertyValue}'");
+					string rootAlarmId = FormatRootAlarmId(alarm);
+					updatedRootAlarmIds.Add(rootAlarmId);
 				}
-				else
-				{
-					engine.GenerateInformation($"[RemoveSiteIncident] Alarm {FormatAlarmId(alarm)} - Failed to update property.");
-				}
+			}
+
+			if (updatedRootAlarmIds.Count > 0)
+			{
+				string alarmList = string.Join("; ", updatedRootAlarmIds);
+				engine.GenerateInformation($"[RemoveSiteIncident] {updatedRootAlarmIds.Count} alarm(s) with IG Code '{IgCode}' have been updated. Root Alarm IDs: {alarmList}");
 			}
 		}
 	}

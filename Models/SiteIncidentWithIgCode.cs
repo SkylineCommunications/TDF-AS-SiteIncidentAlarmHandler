@@ -28,11 +28,6 @@
 
 		protected static string TryGetAlarmProperty(IEngine engine, AlarmEventMessage alarm)
 		{
-			if (alarm == null)
-			{
-				return null;
-			}
-
 			try
 			{
 				return engine.GetAlarmProperty(alarm.DataMinerID, alarm.ElementID, alarm.AlarmID, PropertyName);
@@ -72,11 +67,6 @@
 
 		protected static bool TrySetAlarmProperty(IEngine engine, AlarmEventMessage alarm, string newValue)
 		{
-			if (alarm == null)
-			{
-				return false;
-			}
-
 			try
 			{
 				engine.SetAlarmProperty(alarm.DataMinerID, alarm.ElementID, alarm.AlarmID, PropertyName, newValue);
@@ -84,12 +74,10 @@
 			}
 			catch (ArgumentException)
 			{
-				// Alarm is no longer there / already cleared in the meantime.
 				return false;
 			}
 			catch (Exception)
 			{
-				// Other exceptions
 				return false;
 			}
 		}
@@ -121,15 +109,13 @@
 			return true;
 		}
 
-		protected static string FormatAlarmId(AlarmEventMessage alarm)
+		protected static string FormatRootAlarmId(AlarmEventMessage alarm)
 		{
 			if (alarm == null)
-			{
-				return null;
-			}
+				return "null";
 
 			int rootAlarmId = alarm.TreeID?.RootAlarmID ?? 0;
-			return $"{alarm.DataMinerID}/{alarm.ElementID}/{rootAlarmId}/{alarm.AlarmID}";
+			return $"{alarm.DataMinerID}/{alarm.ElementID}/{rootAlarmId}";
 		}
 
 		[System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "VSSpell001:Spell Check", Justification = "Ig is a domain-specific abbreviation and is intentionally named as such.")]
@@ -148,5 +134,6 @@
 
 			return Array.Empty<AlarmEventMessage>();
 		}
+
 	}
 }

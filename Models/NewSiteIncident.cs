@@ -1,5 +1,7 @@
 ﻿namespace TDFASSiteIncidentAlarmHandler.Models
 {
+	using System.Collections.Generic;
+
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Net.Messages;
 
@@ -18,15 +20,16 @@
 
 			if (alarms.Length == 0)
 			{
-				engine.GenerateInformation($"[NewSiteIncident] No active alarms found for IG Code: '{IgCode}'");
 				return;
 			}
+
+			// HashSet to track unique Root Alarm IDs (no duplicates)
+			var updatedRootAlarmIds = new HashSet<string>();
 
 			foreach (AlarmEventMessage alarm in alarms)
 			{
 				if (alarm == null)
 				{
-					engine.GenerateInformation($"[NewSiteIncident] Encountered null alarm in collection.");
 					continue;
 				}
 
@@ -34,26 +37,28 @@
 
 				if (currentPropertyValue == null)
 				{
-					engine.GenerateInformation($"[NewSiteIncident] Alarm {FormatAlarmId(alarm)} - Property not accessible (alarm might be cleared).");
 					continue;
 				}
 
 				if (!TryAddIncidentTag(currentPropertyValue, out string newPropertyValue))
 				{
 					// Already has INC tag - skip
-					engine.GenerateInformation($"[NewSiteIncident] Alarm {FormatAlarmId(alarm)} - 'INC' tag is already present. Current value: '{currentPropertyValue}'. Skipped.");
 					continue;
 				}
 
 				// Update the property
 				if (TrySetAlarmProperty(engine, alarm, newPropertyValue))
 				{
-					engine.GenerateInformation($"[NewSiteIncident] Alarm {FormatAlarmId(alarm)} - Added 'INC' tag. Changed from '{currentPropertyValue}' to '{newPropertyValue}'");
+					string rootAlarmId = FormatRootAlarmId(alarm);
+					updatedRootAlarmIds.Add(rootAlarmId);
 				}
-				else
-				{
-					engine.GenerateInformation($"[NewSiteIncident] Alarm {FormatAlarmId(alarm)} - Failed to update property.");
-				}
+			}
+
+			// Summary log at the end
+			if (updatedRootAlarmIds.Count > 0)
+			{
+				string alarmList = string.Join("; ", updatedRootAlarmIds);
+				engine.GenerateInformation($"[NewSiteIncident] {updatedRootAlarmIds.Count} alarm(s) with IG Code '{IgCode}' have been updated. Root Alarm IDs: {alarmList}");
 			}
 		}
 	}

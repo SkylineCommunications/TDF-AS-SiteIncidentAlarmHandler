@@ -1,6 +1,7 @@
 ﻿namespace TDFASSiteIncidentAlarmHandler.Models
 {
 	using System;
+	using System.Collections.Generic;
 	using System.Linq;
 
 	using Skyline.DataMiner.Automation;
@@ -25,15 +26,15 @@
 
 			if (alarms.Length == 0)
 			{
-				engine.GenerateInformation($"[UpdateSiteIncident] No active alarms found for Alarm ID: '{AlarmId}'");
 				return;
 			}
+
+			var updatedRootAlarmIds = new HashSet<string>();
 
 			foreach (AlarmEventMessage alarm in alarms)
 			{
 				if (alarm == null)
 				{
-					engine.GenerateInformation($"[UpdateSiteIncident] Encountered null alarm in collection.");
 					continue;
 				}
 
@@ -41,34 +42,30 @@
 
 				if (currentPropertyValue == null)
 				{
-					engine.GenerateInformation($"[UpdateSiteIncident] Alarm {FormatAlarmId(alarm)} - Property not accessible (alarm might be cleared).");
 					continue;
 				}
 
 				if (!TryAddIncidentTag(currentPropertyValue, out string newPropertyValue))
 				{
-					engine.GenerateInformation($"[UpdateSiteIncident] Alarm {FormatAlarmId(alarm)} - 'INC' tag is already present. Current value: '{currentPropertyValue}'. Skipped.");
 					continue;
 				}
 
 				if (TrySetAlarmProperty(engine, alarm, newPropertyValue))
 				{
-					engine.GenerateInformation($"[UpdateSiteIncident] Alarm {FormatAlarmId(alarm)} - Added 'INC' tag. Changed from '{currentPropertyValue}' to '{newPropertyValue}'");
+					string rootAlarmId = FormatRootAlarmId(alarm);
+					updatedRootAlarmIds.Add(rootAlarmId);
 				}
-				else
-				{
-					engine.GenerateInformation($"[UpdateSiteIncident] Alarm {FormatAlarmId(alarm)} - Failed to update property.");
-				}
+			}
+
+			if (updatedRootAlarmIds.Count > 0)
+			{
+				string alarmList = string.Join("; ", updatedRootAlarmIds);
+				engine.GenerateInformation($"[UpdateSiteIncident] Alarms with Alarm ID '{AlarmId}' have been updated. Root Alarm IDs: {alarmList}");
 			}
 		}
 
 		private static string TryGetAlarmProperty(IEngine engine, AlarmEventMessage alarm)
 		{
-			if (alarm == null)
-			{
-				return null;
-			}
-
 			try
 			{
 				return engine.GetAlarmProperty(alarm.DataMinerID, alarm.ElementID, alarm.AlarmID, PropertyName);
@@ -85,11 +82,6 @@
 
 		private static bool TrySetAlarmProperty(IEngine engine, AlarmEventMessage alarm, string newValue)
 		{
-			if (alarm == null)
-			{
-				return false;
-			}
-
 			try
 			{
 				engine.SetAlarmProperty(alarm.DataMinerID, alarm.ElementID, alarm.AlarmID, PropertyName, newValue);
@@ -126,15 +118,13 @@
 			return true;
 		}
 
-		private static string FormatAlarmId(AlarmEventMessage alarm)
+		private static string FormatRootAlarmId(AlarmEventMessage alarm)
 		{
 			if (alarm == null)
-			{
 				return "null";
-			}
 
 			int rootAlarmId = alarm.TreeID?.RootAlarmID ?? 0;
-			return $"{alarm.DataMinerID}/{alarm.ElementID}/{rootAlarmId}/{alarm.AlarmID}";
+			return $"{alarm.DataMinerID}/{alarm.ElementID}/{rootAlarmId}";
 		}
 
 		private AlarmEventMessage[] GetFilteredAlarmByAlarmID()
